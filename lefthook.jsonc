@@ -118,8 +118,8 @@
 
       // Format the staged OpenTofu and Terramate files and restage them, so a
       // commit is always formatted (cicd's check fails on unformatted files).
-      "terraform-fmt": {
-        "glob": ["*.tf", "**/*.tf"],
+      "tofu-fmt": {
+        "glob": ["*.tf", "**/*.tf", "*.tofu", "**/*.tofu"],
         "run": "tofu fmt {staged_files}",
         "stage_fixed": true,
       },
@@ -135,12 +135,12 @@
         ],
       },
 
-      "terraform-validate": {
-        "glob": "**/*.tf",
+      "tofu-validate": {
+        "glob": ["**/*.tf", "**/*.tofu"],
         "run": "terramate run -- tofu validate",
         "skip": [
           {
-            "run": "! git ls-files '*.tf' '*tm.hcl' | grep -q .",
+            "run": "! git ls-files '*.tf' '*.tofu' '*tm.hcl' | grep -q .",
           },
         ],
       },

@@ -54,7 +54,7 @@ jobs:
     outputs:
       go: ${{ steps.detect.outputs.go }}
       deno: ${{ steps.detect.outputs.deno }}
-      terraform: ${{ steps.detect.outputs.terraform }}
+      tofu: ${{ steps.detect.outputs.tofu }}
       terramate: ${{ steps.detect.outputs.terramate }}
       gate: ${{ steps.detect.outputs.gate }}
       kind: ${{ steps.detect.outputs.kind }}
@@ -84,7 +84,7 @@ jobs:
         with:
           go: ${{ needs.detect.outputs.go }}
           deno: ${{ needs.detect.outputs.deno }}
-          terraform: ${{ needs.detect.outputs.terraform }}
+          tofu: ${{ needs.detect.outputs.tofu }}
           terramate: ${{ needs.detect.outputs.terramate }}
           gate: ${{ needs.detect.outputs.gate }}
           # The commits this run introduces, for commit-message linting. A
