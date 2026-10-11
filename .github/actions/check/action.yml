@@ -15,7 +15,7 @@ inputs:
   deno:
     description: detect output
     required: true
-  terraform:
+  tofu:
     description: detect output
     required: true
   terramate:
@@ -111,13 +111,13 @@ runs:
         deno task test
 
     - name: OpenTofu Setup
-      if: inputs.terraform == 'true'
+      if: inputs.tofu == 'true'
       uses: opentofu/setup-opentofu@v2
       with:
         tofu_wrapper: false
 
-    - name: Terraform Format Check
-      if: inputs.terraform == 'true'
+    - name: OpenTofu Format Check
+      if: inputs.tofu == 'true'
       shell: bash
       run: tofu fmt -check -recursive
 

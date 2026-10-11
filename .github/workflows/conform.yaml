@@ -147,7 +147,7 @@ jobs:
         with:
           go: ${{ steps.detect.outputs.go }}
           deno: ${{ steps.detect.outputs.deno }}
-          terraform: ${{ steps.detect.outputs.terraform }}
+          tofu: ${{ steps.detect.outputs.tofu }}
           terramate: ${{ steps.detect.outputs.terramate }}
           gate: ${{ steps.detect.outputs.gate }}
           npm-token: ${{ secrets.PKG_READ_TOKEN }}

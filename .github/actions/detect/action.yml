@@ -14,9 +14,9 @@ outputs:
   deno:
     description: "true when deno.json or deno.jsonc is at the root"
     value: ${{ steps.detect.outputs.deno }}
-  terraform:
-    description: "true when the project has .tf files"
-    value: ${{ steps.detect.outputs.terraform }}
+  tofu:
+    description: "true when the project has .tf or .tofu files"
+    value: ${{ steps.detect.outputs.tofu }}
   terramate:
     description: "true when terramate.tm.hcl is at the root"
     value: ${{ steps.detect.outputs.terramate }}
@@ -39,7 +39,7 @@ runs:
       run: |
         go=false; [ -f go.mod ] && go=true
         deno=false; { [ -f deno.json ] || [ -f deno.jsonc ]; } && deno=true
-        terraform=false; git ls-files '*.tf' | grep -q . && terraform=true
+        tofu=false; git ls-files '*.tf' '*.tofu' | grep -q . && tofu=true
         terramate=false; [ -f terramate.tm.hcl ] && terramate=true
 
         # Go projects that import project-standards' ci package run ci:check.
@@ -65,7 +65,7 @@ runs:
         {
           echo "go=$go"
           echo "deno=$deno"
-          echo "terraform=$terraform"
+          echo "tofu=$tofu"
           echo "terramate=$terramate"
           echo "gate=$gate"
           echo "kind=$kind"
