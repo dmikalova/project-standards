@@ -271,7 +271,7 @@ jobs:
           LIST: ${{ needs.list.result }}
           WARNINGS: ${{ steps.annotations.outputs.text }}
         run: |
-          webhook=$(gcloud secrets versions access latest --secret=discord-webhook-maintenance --project="$GCP_PROJECT")
+          webhook=$(gcloud secrets versions access latest --secret=discord --project="$GCP_PROJECT" | jq -r .MAINTENANCE_WEBHOOK_URL)
           echo "::add-mask::$webhook"
 
           if [ "$LIST" != success ]; then

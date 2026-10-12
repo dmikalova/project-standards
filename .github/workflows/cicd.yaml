@@ -424,7 +424,7 @@ jobs:
             echo "Healthy scheduled run: nothing to post."
             exit 0
           fi
-          webhook=$(gcloud secrets versions access latest --secret=discord-webhook-deploys --project="$GCP_PROJECT")
+          webhook=$(gcloud secrets versions access latest --secret=discord --project="$GCP_PROJECT" | jq -r .DEPLOYS_WEBHOOK_URL)
           echo "::add-mask::$webhook"
 
           subject=$(printf '%s\n' "$MESSAGE" | head -1)
