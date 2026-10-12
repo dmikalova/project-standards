@@ -32,6 +32,13 @@ name: CI/CD
 
 on:
   workflow_call:
+    outputs:
+      released:
+        description: "true when this run cut a new release"
+        value: ${{ jobs.release.outputs.released }}
+      version:
+        description: the version this run released, or the current one
+        value: ${{ jobs.release.outputs.version }}
 
 # Hardcoded GCP configuration (convention over configuration)
 env:
@@ -101,6 +108,7 @@ jobs:
     permissions:
       contents: write
     outputs:
+      released: ${{ steps.version.outputs.released }}
       version: ${{ steps.version.outputs.version }}
       notes: ${{ steps.notes.outputs.notes }}
     steps:
