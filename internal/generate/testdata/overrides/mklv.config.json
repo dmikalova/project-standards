@@ -42,6 +42,13 @@
       "ignore": ["cancelled"],
       "locale": "us",
       "exclude": { "replace": ["docs/**"] }
+    },
+    "lefthook": {
+      "pre-commit": {
+        "commands": {
+          "no-shell-scripts": { "exclude": ["scripts/*.sh"] }
+        }
+      }
     }
   }
 }

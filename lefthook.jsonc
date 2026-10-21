@@ -112,8 +112,12 @@
         "run": "git --no-pager grep -E '^(<<<<<<<|=======|>>>>>>>)' && exit 1 || exit 0",
       },
 
+      // glob and {files} rather than git ls-files, so lefthook's own exclude
+      // applies: a project that must ship shell, such as den's mgmt exec
+      // bodies, lists the paths under tools.lefthook in mklv.config.json.
       "no-shell-scripts": {
-        "run": "if git ls-files '*.sh' | grep .; then\n  echo 'Error: Shell scripts (.sh) are not allowed. Use TypeScript instead.'\n  exit 1\nfi",
+        "glob": "*.sh",
+        "run": "printf '%s\\n' {files}; echo 'Error: Shell scripts (.sh) are not allowed. Use TypeScript instead.'; exit 1",
       },
 
       // Format the staged OpenTofu and Terramate files and restage them, so a

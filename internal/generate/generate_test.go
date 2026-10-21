@@ -83,6 +83,7 @@ func TestFilesAreSortedAndDeterministic(t *testing.T) {
 		".goreleaser.yaml",
 		".markdownlint-cli2.yaml",
 		".ruleguard.go",
+		"lefthook-local.yaml",
 	}
 	if !reflect.DeepEqual(paths, want) {
 		t.Errorf("paths = %v, want %v", paths, want)

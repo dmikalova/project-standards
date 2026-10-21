@@ -63,6 +63,10 @@
           "description": "Merged onto the base .commitlint.yaml, in conventionalcommit/commitlint's config schema.",
           "$ref": "#/$defs/override"
         },
+        "lefthook": {
+          "description": "Written to lefthook-local.yaml, in lefthook's config schema. It merges after the shared hooks, so it is how a project excludes paths from one, e.g. pre-commit.commands.no-shell-scripts.exclude.",
+          "$ref": "#/$defs/override"
+        },
         "misspell": {
           "description": "misspell settings, passed as flags because misspell has no config file.",
           "type": "object",

@@ -19,7 +19,7 @@ var Kinds = []string{"cli", "cloudrun", "library", "infra"}
 
 // Tools lists the tools whose base configs a project can override under
 // tools.<name>.
-var Tools = []string{"commitlint", "gitleaks", "golangci", "markdownlint", "misspell"}
+var Tools = []string{"commitlint", "gitleaks", "golangci", "lefthook", "markdownlint", "misspell"}
 
 // Project is a parsed mklv.config.json. Every field is optional, and a project
 // without the file gets the zero Project.

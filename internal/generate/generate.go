@@ -45,6 +45,10 @@ type toolConfig struct {
 	path   string // the path the tool reads its config from
 	format format
 	goOnly bool // generated only in a Go module
+
+	// overrideOnly generates the file only when the project overrides the
+	// tool. An empty lefthook-local file in every project would be noise.
+	overrideOnly bool
 }
 
 // toolConfigs lists every generated config file. Each path is the file the tool
@@ -56,6 +60,8 @@ type toolConfig struct {
 //   - golangci-lint looks for .golangci.yaml upward from the current directory.
 //   - goldmark-lint reads markdownlint-cli2's .markdownlint-cli2.yaml, walking up
 //     from the current directory.
+//   - lefthook merges lefthook-local.yaml after the project-standards remote,
+//     so it is the only layer that can override a shared hook.
 //
 // misspell has no config file; see Misspell.
 var toolConfigs = []toolConfig{
@@ -67,6 +73,13 @@ var toolConfigs = []toolConfig{
 		path:   ".golangci.yaml",
 		format: yamlFormat,
 		goOnly: true,
+	},
+	{
+		tool:         "lefthook",
+		base:         "lefthook-local.yaml",
+		path:         "lefthook-local.yaml",
+		format:       yamlFormat,
+		overrideOnly: true,
 	},
 	{
 		tool:   "markdownlint",
@@ -85,6 +98,9 @@ func Files(p *config.Project, goModule bool) ([]File, error) {
 	files := make([]File, 0, len(toolConfigs)+1)
 	for _, tc := range toolConfigs {
 		if tc.goOnly && !goModule {
+			continue
+		}
+		if _, ok := p.Tools[tc.tool]; tc.overrideOnly && !ok {
 			continue
 		}
 		f, err := tc.render(p)

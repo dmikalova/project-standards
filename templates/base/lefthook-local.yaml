@@ -1,0 +1,3 @@
+# lefthook has no base config of its own here: the shared hooks come from the
+# project-standards remote, and this file only carries a project's overrides.
+{}
