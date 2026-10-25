@@ -40,7 +40,7 @@
     },
     "kind": {
       "description": "What the project produces and how it ships (ADR 0006).",
-      "enum": ["cli", "cloudrun", "library", "infra"]
+      "enum": ["cli", "cloudrun", "image", "library", "infra"]
     },
     "tools": {
       "description": "Overrides merged onto each tool's base config. Objects merge deeply, lists are appended, {\"replace\": [...]} replaces a list, and null removes a key.",
@@ -65,6 +65,10 @@
         },
         "lefthook": {
           "description": "Written to lefthook-local.yaml, in lefthook's config schema. It merges after the shared hooks, so it is how a project excludes paths from one, e.g. pre-commit.commands.no-shell-scripts.exclude.",
+          "$ref": "#/$defs/override"
+        },
+        "pnpm": {
+          "description": "Merged onto the base pnpm-workspace.yaml of a Node project, in pnpm's settings schema. Put packages and allowBuilds here.",
           "$ref": "#/$defs/override"
         },
         "misspell": {

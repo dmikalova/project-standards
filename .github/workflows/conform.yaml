@@ -147,6 +147,7 @@ jobs:
         with:
           go: ${{ steps.detect.outputs.go }}
           deno: ${{ steps.detect.outputs.deno }}
+          node: ${{ steps.detect.outputs.node }}
           tofu: ${{ steps.detect.outputs.tofu }}
           terramate: ${{ steps.detect.outputs.terramate }}
           gate: ${{ steps.detect.outputs.gate }}

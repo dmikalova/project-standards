@@ -17,6 +17,11 @@
       },
       "run": { "build-tags": { "replace": ["mage", "integration"] } }
     },
+    "pnpm": {
+      "packages": ["plugins/*"],
+      "allowBuilds": { "esbuild": true },
+      "minimumReleaseAge": 1440
+    },
     "markdownlint": {
       "config": {
         "MD013": { "line_length": 120 },

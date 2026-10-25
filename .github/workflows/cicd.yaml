@@ -6,7 +6,8 @@
 #   release svu picks the next version from Conventional Commits and
 #           `project-standards changelog` writes the notes; cli projects release
 #           binaries with goreleaser, everything else gets a gh release
-#   deploy  cloudrun: image build, Atlas schema apply, Cloud Run deploy
+#   deploy  image:    image build and GHCR push
+#           cloudrun: the same, then Atlas schema apply and Cloud Run deploy
 #           infra:    terramate apply
 #   notify  posts every main-branch result, pass or fail, to Discord #deploys,
 #           with the run's warning and notice annotations (deprecations,
@@ -61,6 +62,7 @@ jobs:
     outputs:
       go: ${{ steps.detect.outputs.go }}
       deno: ${{ steps.detect.outputs.deno }}
+      node: ${{ steps.detect.outputs.node }}
       tofu: ${{ steps.detect.outputs.tofu }}
       terramate: ${{ steps.detect.outputs.terramate }}
       gate: ${{ steps.detect.outputs.gate }}
@@ -91,6 +93,7 @@ jobs:
         with:
           go: ${{ needs.detect.outputs.go }}
           deno: ${{ needs.detect.outputs.deno }}
+          node: ${{ needs.detect.outputs.node }}
           tofu: ${{ needs.detect.outputs.tofu }}
           terramate: ${{ needs.detect.outputs.terramate }}
           gate: ${{ needs.detect.outputs.gate }}
@@ -186,10 +189,14 @@ jobs:
           git tag "$VERSION"
           go run "$GORELEASER" release --clean --release-notes /tmp/notes.md
 
-  deploy-cloudrun:
-    name: Deploy (Cloud Run)
+  # An image project stops after the GHCR push. A cloudrun project continues
+  # to the schema apply and the Cloud Run deploy.
+  deploy-image:
+    name: Deploy (${{ needs.detect.outputs.kind }})
     needs: [detect, release]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'schedule' && needs.detect.outputs.kind == 'cloudrun'
+    if: >-
+      github.ref == 'refs/heads/main' && github.event_name != 'schedule' &&
+      contains(fromJSON('["cloudrun", "image"]'), needs.detect.outputs.kind)
     runs-on: ubuntu-26.04
     permissions:
       contents: read
@@ -198,6 +205,7 @@ jobs:
     env:
       NAME: ${{ needs.detect.outputs.name }}
       VERSION: ${{ needs.release.outputs.version }}
+      CLOUDRUN: ${{ needs.detect.outputs.kind == 'cloudrun' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -221,7 +229,8 @@ jobs:
           DENO: ${{ needs.detect.outputs.deno }}
         run: |
           if [ -f Dockerfile ]; then
-            buildah build -t "$IMAGE" .
+            # The source label links the GHCR package to this repository.
+            buildah build --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" -t "$IMAGE" .
           elif [ "$DENO" = true ]; then
             DENO_VERSION=$(cat .deno-version)
             [ -f .npmrc ] && cp .npmrc "$HOME/.npmrc"
@@ -240,9 +249,10 @@ jobs:
             buildah config --workingdir /app "$ARTIFACT"
             buildah config --entrypoint '["deno"]' "$ARTIFACT"
             buildah config --cmd "run --cached-only --permission-set src/main.ts" "$ARTIFACT"
+            buildah config --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$ARTIFACT"
             buildah commit "$ARTIFACT" "$IMAGE"
           else
-            echo "::error::cloudrun projects need a Dockerfile unless they are Deno apps."
+            echo "::error::cloudrun and image projects need a Dockerfile unless they are Deno apps."
             exit 1
           fi
 
@@ -255,8 +265,15 @@ jobs:
           buildah tag "$IMAGE" "$GHCR"
           buildah login -u dmikalova -p "$GITHUB_TOKEN" ghcr.io
           buildah push "$GHCR"
+          # An image project is pulled by others, so it also gets latest. A
+          # host that runs it pins the version tag.
+          if [ "$CLOUDRUN" != true ]; then
+            buildah tag "$IMAGE" "${GHCR%:*}:latest"
+            buildah push "${GHCR%:*}:latest"
+          fi
 
       - name: GCP Authn
+        if: env.CLOUDRUN == 'true'
         uses: google-github-actions/auth@v3
         with:
           service_account: ${{ env.WIF_DEPLOY_SA }}
@@ -264,6 +281,7 @@ jobs:
 
       - name: DB Schema Setup
         id: schema
+        if: env.CLOUDRUN == 'true'
         run: |
           if [ ! -f db/schema.hcl ]; then
             echo "No db/schema.hcl, skipping schema apply"
@@ -281,11 +299,11 @@ jobs:
           echo "database_url_session=$DATABASE_URL_SESSION" >> "$GITHUB_OUTPUT"
 
       - name: Atlas Setup
-        if: steps.schema.outputs.skip != 'true'
+        if: env.CLOUDRUN == 'true' && steps.schema.outputs.skip != 'true'
         uses: ariga/setup-atlas@v0
 
       - name: Atlas Schema Apply
-        if: steps.schema.outputs.skip != 'true'
+        if: env.CLOUDRUN == 'true' && steps.schema.outputs.skip != 'true'
         env:
           URL: ${{ steps.schema.outputs.database_url_session }}
           SCHEMA: ${{ steps.schema.outputs.schema_name }}
@@ -313,6 +331,7 @@ jobs:
             --auto-approve
 
       - name: Cloud Run Deploy
+        if: env.CLOUDRUN == 'true'
         env:
           GAR: ${{ steps.image.outputs.gar }}
         run: |
@@ -388,7 +407,7 @@ jobs:
 
   notify:
     name: Notify
-    needs: [detect, check, release, deploy-cloudrun, deploy-infra]
+    needs: [detect, check, release, deploy-image, deploy-infra]
     if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-26.04
     permissions:

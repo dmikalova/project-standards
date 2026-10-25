@@ -12,6 +12,7 @@ and the vocabulary in [`CONTEXT.md`](CONTEXT.md).
 - **Generated tool configs:** `.golangci.yaml`, `.markdownlint-cli2.yaml`,
   `.gitleaks.toml` and `.commitlint.yaml`, written from the base configs in
   [`templates/base/`](templates/base/) merged with the project's overrides,
+  for a Node project a `pnpm-workspace.yaml` (ADR 0008),
   and for a Go project of kind cli a `.goreleaser.yaml` that builds its
   `name` from its `entrypoint`'s directory, or `cmd/<name>`. A project that
   sets `tools.lefthook` also gets a `lefthook-local.yaml`, the one layer that
@@ -79,8 +80,8 @@ Validate locally with `project-standards fix && project-standards check`.
 
 - `.github/workflows/cicd.yaml` calls
   `dmikalova/project-standards/.github/workflows/cicd.yaml@main`.
-- `mklv.config.json` is optional. It declares the `kind` (cli, cloudrun, library
-  or infra), deploy settings, tool overrides and ignore-file additions; see
+- `mklv.config.json` is optional. It declares the `kind` (cli, cloudrun, image,
+  library or infra), deploy settings, tool overrides and ignore-file additions; see
   [`schema/mklv.config.schema.json`](schema/mklv.config.schema.json).
 
 `project-standards conform` writes all of these from the templates, and the

@@ -15,7 +15,8 @@ import (
 // Drift fails if a generated config differs from what WriteGenerated writes.
 // Generated configs are the base configs merged with mklv.config.json; a hand
 // edit to one is drift, and the fix is to move the change into
-// mklv.config.json. Without a go.mod the Go-only configs are not checked.
+// mklv.config.json. Configs for a language the project does not use are not
+// checked.
 func (c *Checks) Drift() error {
 	files, err := generatedFiles()
 	if err != nil {
@@ -42,8 +43,8 @@ func (c *Checks) Drift() error {
 }
 
 // WriteGenerated writes every generated config that is missing or differs,
-// leaving up-to-date files untouched. Without a go.mod the Go-only configs are
-// not written.
+// leaving up-to-date files untouched. Configs for a language the project does
+// not use are not written.
 func (c *Checks) WriteGenerated() error {
 	files, err := generatedFiles()
 	if err != nil {
@@ -68,5 +69,5 @@ func generatedFiles() ([]generate.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return generate.Files(p, GoModule())
+	return generate.Files(p, generate.Detect("."))
 }

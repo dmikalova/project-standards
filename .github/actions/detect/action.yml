@@ -1,5 +1,8 @@
 # Detect a checked-out project's languages, gate and kind (ADR 0006).
 #
+# A project with deno.json is Deno. A project with package.json and no
+# deno.json is TypeScript on Node, checked with Vite+ (ADR 0008).
+#
 # kind comes from mklv.config.json. Until every project declares it, it is
 # inferred: a terramate root is infra, a Dockerfile or a Deno app is cloudrun,
 # a Go module with cmd/ is cli, anything else is a library.
@@ -14,6 +17,9 @@ outputs:
   deno:
     description: "true when deno.json or deno.jsonc is at the root"
     value: ${{ steps.detect.outputs.deno }}
+  node:
+    description: "true when package.json is at the root and deno.json is not"
+    value: ${{ steps.detect.outputs.node }}
   tofu:
     description: "true when the project has .tf or .tofu files"
     value: ${{ steps.detect.outputs.tofu }}
@@ -24,7 +30,7 @@ outputs:
     description: "ci-check, mage-check or none: how a Go project checks itself"
     value: ${{ steps.detect.outputs.gate }}
   kind:
-    description: "cli, cloudrun, library or infra"
+    description: "cli, cloudrun, image, library or infra"
     value: ${{ steps.detect.outputs.kind }}
   name:
     description: "mklv.config.json name, or the repository name"
@@ -39,6 +45,7 @@ runs:
       run: |
         go=false; [ -f go.mod ] && go=true
         deno=false; { [ -f deno.json ] || [ -f deno.jsonc ]; } && deno=true
+        node=false; [ -f package.json ] && ! $deno && node=true
         tofu=false; git ls-files '*.tf' '*.tofu' | grep -q . && tofu=true
         terramate=false; [ -f terramate.tm.hcl ] && terramate=true
 
@@ -65,6 +72,7 @@ runs:
         {
           echo "go=$go"
           echo "deno=$deno"
+          echo "node=$node"
           echo "tofu=$tofu"
           echo "terramate=$terramate"
           echo "gate=$gate"

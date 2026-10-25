@@ -15,11 +15,11 @@ import (
 const FileName = "mklv.config.json"
 
 // Kinds lists the valid values of the kind field (ADR 0006).
-var Kinds = []string{"cli", "cloudrun", "library", "infra"}
+var Kinds = []string{"cli", "cloudrun", "image", "library", "infra"}
 
 // Tools lists the tools whose base configs a project can override under
 // tools.<name>.
-var Tools = []string{"commitlint", "gitleaks", "golangci", "lefthook", "markdownlint", "misspell"}
+var Tools = []string{"commitlint", "gitleaks", "golangci", "lefthook", "markdownlint", "misspell", "pnpm"}
 
 // Project is a parsed mklv.config.json. Every field is optional, and a project
 // without the file gets the zero Project.

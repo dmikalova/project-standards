@@ -77,6 +77,28 @@
         ],
       },
 
+      // TypeScript on Node (ADR 0008): package.json and no deno.json. Vite+
+      // runs format, lint and type checks, then Vitest, with the project's
+      // own vite.config.ts.
+      "node-check": {
+        "run": "vp check --fix",
+        "stage_fixed": true,
+        "skip": [
+          {
+            "run": "! git ls-files package.json | grep -q . || git ls-files 'deno.json*' | grep -q .",
+          },
+        ],
+      },
+
+      "node-test": {
+        "run": "vp test",
+        "skip": [
+          {
+            "run": "! git ls-files package.json | grep -q . || git ls-files 'deno.json*' | grep -q .",
+          },
+        ],
+      },
+
       // A Go repo whose magefiles import project-standards' ci package runs
       // the full verify-only gate (ADR 0003): formatting, build, vet, lint,
       // markdown, spelling, secrets, commits, tests and coverage. The hooks
