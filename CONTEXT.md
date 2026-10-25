@@ -13,7 +13,7 @@ A single codebase that follows the standards. Deliberately not tied to any code 
 _Avoid_: repo, repository, app
 
 **Kind**:
-What a project produces and how it is shipped: cli, cloudrun, library or infra.
+What a project produces and how it is shipped: cli, cloudrun, image, library or infra.
 _Avoid_: type, flavor, target
 
 **Base config**:

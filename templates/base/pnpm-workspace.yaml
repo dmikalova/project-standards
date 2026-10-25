@@ -1,0 +1,16 @@
+# The supply-chain settings every Node project uses (ADR 0008). A project adds
+# its own settings, such as packages and allowBuilds, under tools.pnpm in
+# mklv.config.json.
+
+# Install no version until it is 3 days old: the delay Renovate uses for new
+# releases. Most malicious releases are removed in that time.
+minimumReleaseAge: 4320
+# Fail when no version in a range is old enough, rather than take a new one.
+minimumReleaseAgeStrict: true
+# Fail when a package loses trust evidence, such as provenance, that an older
+# release had: a sign of a stolen publish token.
+trustPolicy: no-downgrade
+# Only direct dependencies may come from git or a tarball URL.
+blockExoticSubdeps: true
+# Fail on a dependency build script that allowBuilds does not approve.
+strictDepBuilds: true

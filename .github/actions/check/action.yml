@@ -15,6 +15,10 @@ inputs:
   deno:
     description: detect output
     required: true
+  node:
+    description: detect output
+    required: false
+    default: "false"
   tofu:
     description: detect output
     required: true
@@ -29,7 +33,7 @@ inputs:
     required: false
     default: ""
   npm-token:
-    description: token for the private @dmikalova npm packages Deno projects install
+    description: token for the private @dmikalova npm packages Deno and Node projects install
     required: false
     default: ""
 
@@ -109,6 +113,26 @@ runs:
         deno lint
         deno task check
         deno task test
+
+    # Vite+ runs the whole Node check (ADR 0008). Each project sets its lint,
+    # format and test rules in vite.config.ts. vp install reads the package
+    # manager from the lockfile; pnpm reads the project's .npmrc itself.
+    - name: Vite+ Setup
+      if: inputs.node == 'true'
+      uses: voidzero-dev/setup-vp@v1.22.0
+      with:
+        cache: true
+
+    - name: Node Check
+      if: inputs.node == 'true'
+      shell: bash
+      env:
+        NPM_TOKEN: ${{ inputs.npm-token }}
+      run: |
+        vp install
+        if jq -e '.scripts.build' package.json >/dev/null; then vp run build; fi
+        vp check
+        vp test
 
     - name: OpenTofu Setup
       if: inputs.tofu == 'true'

@@ -181,7 +181,7 @@ func (c *conformer) standardFiles(goModule bool) ([]generate.File, error) {
 // without the generated header was written by hand: it is reported, not
 // overwritten, because deleting it could silently drop real exclusions.
 func (c *conformer) generated(p *config.Project, goModule bool) ([]generate.File, error) {
-	all, err := generate.Files(p, goModule)
+	all, err := generate.Files(p, generate.Langs{Go: goModule, Node: generate.Detect(c.dir).Node})
 	if err != nil {
 		c.find(ruleConfig, config.FileName, err.Error()+"; the generated configs were not written")
 		return nil, nil

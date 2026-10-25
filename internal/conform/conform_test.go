@@ -277,7 +277,7 @@ func TestInvalidConfig(t *testing.T) {
 	}{
 		{"schema", `{"kind": "app", "runtime": {"port": 0}, "extra": 1}`,
 			"invalid against schema/mklv.config.schema.json: /: additional properties 'extra' " +
-				"not allowed; /kind: value must be one of 'cli', 'cloudrun', 'library', 'infra'; " +
+				"not allowed; /kind: value must be one of 'cli', 'cloudrun', 'image', 'library', 'infra'; " +
 				"/runtime/port: minimum: got 0, want 1"},
 		{"JSON", `{"kind": `, "invalid against schema/mklv.config.schema.json: not valid JSON"},
 		{"Go types", `{"runtime": {"port": 8080.0}}`,

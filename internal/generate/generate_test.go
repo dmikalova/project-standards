@@ -30,7 +30,7 @@ func TestGolden(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			files, err := Files(p, true)
+			files, err := Files(p, Langs{Go: true, Node: true})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -68,7 +68,7 @@ func TestFilesAreSortedAndDeterministic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	first, err := Files(p, true)
+	first, err := Files(p, Langs{Go: true, Node: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,13 +84,14 @@ func TestFilesAreSortedAndDeterministic(t *testing.T) {
 		".markdownlint-cli2.yaml",
 		".ruleguard.go",
 		"lefthook-local.yaml",
+		"pnpm-workspace.yaml",
 	}
 	if !reflect.DeepEqual(paths, want) {
 		t.Errorf("paths = %v, want %v", paths, want)
 	}
 	// Go randomizes map iteration, so repeated runs would expose unsorted keys.
 	for range 20 {
-		again, err := Files(p, true)
+		again, err := Files(p, Langs{Go: true, Node: true})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -101,7 +102,7 @@ func TestFilesAreSortedAndDeterministic(t *testing.T) {
 }
 
 func TestFilesWithoutGoModule(t *testing.T) {
-	files, err := Files(&config.Project{}, false)
+	files, err := Files(&config.Project{}, Langs{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,6 +113,51 @@ func TestFilesWithoutGoModule(t *testing.T) {
 	want := []string{".commitlint.yaml", ".gitleaks.toml", ".markdownlint-cli2.yaml"}
 	if !reflect.DeepEqual(paths, want) {
 		t.Errorf("paths without a go.mod = %v, want %v", paths, want)
+	}
+}
+
+func TestFilesNodeOnly(t *testing.T) {
+	has := func(l Langs) bool {
+		files, err := Files(&config.Project{}, l)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, f := range files {
+			if f.Path == "pnpm-workspace.yaml" {
+				return true
+			}
+		}
+		return false
+	}
+	if !has(Langs{Node: true}) {
+		t.Error("a Node project got no pnpm-workspace.yaml")
+	}
+	if has(Langs{Go: true}) {
+		t.Error("a project without Node got a pnpm-workspace.yaml")
+	}
+}
+
+func TestDetect(t *testing.T) {
+	tests := []struct {
+		files []string
+		want  Langs
+	}{
+		{nil, Langs{}},
+		{[]string{"go.mod"}, Langs{Go: true}},
+		{[]string{"package.json"}, Langs{Node: true}},
+		{[]string{"package.json", "deno.json"}, Langs{}},
+		{[]string{"package.json", "deno.jsonc", "go.mod"}, Langs{Go: true}},
+	}
+	for _, tt := range tests {
+		dir := t.TempDir()
+		for _, name := range tt.files {
+			if err := os.WriteFile(filepath.Join(dir, name), nil, 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if got := Detect(dir); got != tt.want {
+			t.Errorf("Detect(%v) = %+v, want %+v", tt.files, got, tt.want)
+		}
 	}
 }
 
@@ -127,7 +173,7 @@ func TestGoreleaser(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			files, err := Files(&tt.p, true)
+			files, err := Files(&tt.p, Langs{Go: true})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -147,24 +193,24 @@ func TestGoreleaser(t *testing.T) {
 			}
 		})
 	}
-	if _, err := Files(&config.Project{Kind: "cli"}, true); err == nil || !strings.Contains(err.Error(), "needs name") {
+	if _, err := Files(&config.Project{Kind: "cli"}, Langs{Go: true}); err == nil || !strings.Contains(err.Error(), "needs name") {
 		t.Errorf("a cli project without a name: %v", err)
 	}
 	for _, p := range []config.Project{{Name: "x", Kind: "cloudrun"}} {
-		files, _ := Files(&p, true)
+		files, _ := Files(&p, Langs{Go: true})
 		for _, f := range files {
 			if f.Path == GoreleaserPath {
 				t.Errorf("kind %s got a goreleaser config", p.Kind)
 			}
 		}
 	}
-	if files, _ := Files(&config.Project{Name: "x", Kind: "cli"}, false); len(files) != 3 {
+	if files, _ := Files(&config.Project{Name: "x", Kind: "cli"}, Langs{}); len(files) != 3 {
 		t.Errorf("a cli project without a go.mod got %d files", len(files))
 	}
 }
 
 func TestHeaders(t *testing.T) {
-	files, err := Files(&config.Project{}, true)
+	files, err := Files(&config.Project{}, Langs{Go: true, Node: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,7 +307,7 @@ func TestFilesMergeConflict(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = Files(p, true)
+	_, err = Files(p, Langs{Go: true, Node: true})
 	if err == nil || !strings.Contains(err.Error(), "tools.golangci: linters.enable") {
 		t.Errorf("err = %v, want a conflict at tools.golangci: linters.enable", err)
 	}
@@ -274,7 +320,7 @@ func TestEncodeError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = Files(p, true)
+	_, err = Files(p, Langs{Go: true, Node: true})
 	if err == nil || !strings.Contains(err.Error(), "gitleaks: encoding .gitleaks.toml") {
 		t.Errorf("err = %v, want a TOML encoding error", err)
 	}
@@ -339,7 +385,7 @@ func TestIsGenerated(t *testing.T) {
 // TestFilesAreGenerated keeps every generated file detectable as generated, so
 // conformance regenerates it rather than reporting it as hand-written.
 func TestFilesAreGenerated(t *testing.T) {
-	files, err := Files(&config.Project{}, true)
+	files, err := Files(&config.Project{}, Langs{Go: true, Node: true})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -16,10 +16,11 @@ There was one reusable workflow per kind of project: `go-cloudrun.yaml`, `deno-c
 4. **Deploy**, on main, depending on `kind`:
    - **cli**: goreleaser publishes binaries, from a `.goreleaser.yaml` generated like the tool configs (ADR 0005): goreleaser's own default looks for a main package at the root, where a project's command rarely is
    - **cloudrun**: builds the image and deploys to Cloud Run
+   - **image**: builds the image and pushes it to GHCR only (ADR 0008)
    - **infra**: terramate apply
    - **library**: a GitHub release with the notes, and nothing to deploy
 
-   cloudrun and infra projects get the same GitHub release.
+   cloudrun, image and infra projects get the same GitHub release.
 5. **Notify:** every deploy, whether it passed or failed, is posted to the Discord `#deploys` channel through a webhook, with the release notes and the run's warning and notice annotations, such as deprecated action runtimes and runner label migrations. The webhook URL is stored with SOPS in infrastructure, synced to Secret Manager, and read through WIF.
 
 **Scheduled runs are health checks.** The standard caller also runs weekly. A scheduled run checks the project, catching breakage from tool and dependency updates, and re-applies `infra` projects to correct drift. It releases and deploys nothing else, and notifies only on a failure or an annotation.

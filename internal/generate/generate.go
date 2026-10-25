@@ -6,9 +6,12 @@ package generate
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 	"path"
+	"path/filepath"
 	"slices"
 	"strings"
 	"text/template"
@@ -38,13 +41,36 @@ const (
 	tomlFormat
 )
 
+// Langs says which languages a project uses. Some generated configs apply to
+// one language only.
+type Langs struct {
+	// Go is true for a Go module: go.mod is at the root.
+	Go bool
+	// Node is true for a TypeScript project on Node (ADR 0008): package.json
+	// is at the root, and deno.json and deno.jsonc are not.
+	Node bool
+}
+
+// Detect returns the languages of the project in dir.
+func Detect(dir string) Langs {
+	has := func(name string) bool {
+		_, err := os.Stat(filepath.Join(dir, name))
+		return !errors.Is(err, fs.ErrNotExist)
+	}
+	return Langs{
+		Go:   has("go.mod"),
+		Node: has("package.json") && !has("deno.json") && !has("deno.jsonc"),
+	}
+}
+
 // A toolConfig maps a tool's base config to the file it is generated into.
 type toolConfig struct {
-	tool   string // key under tools in mklv.config.json
-	base   string // file under templates/base
-	path   string // the path the tool reads its config from
-	format format
-	goOnly bool // generated only in a Go module
+	tool     string // key under tools in mklv.config.json
+	base     string // file under templates/base
+	path     string // the path the tool reads its config from
+	format   format
+	goOnly   bool // generated only in a Go module
+	nodeOnly bool // generated only in a Node project
 
 	// overrideOnly generates the file only when the project overrides the
 	// tool. An empty lefthook-local file in every project would be noise.
@@ -62,6 +88,7 @@ type toolConfig struct {
 //     from the current directory.
 //   - lefthook merges lefthook-local.yaml after the project-standards remote,
 //     so it is the only layer that can override a shared hook.
+//   - pnpm reads its settings from pnpm-workspace.yaml at the project root.
 //
 // misspell has no config file; see Misspell.
 var toolConfigs = []toolConfig{
@@ -87,17 +114,25 @@ var toolConfigs = []toolConfig{
 		path:   ".markdownlint-cli2.yaml",
 		format: yamlFormat,
 	},
+	{
+		tool:     "pnpm",
+		base:     "pnpm-workspace.yaml",
+		path:     "pnpm-workspace.yaml",
+		format:   yamlFormat,
+		nodeOnly: true,
+	},
 }
 
-// Files returns the generated files for a project, sorted by path. goModule
-// says whether the project is a Go module: only a Go module gets the Go-only
-// files, the golangci-lint config and the ruleguard ruleset. The output depends
-// only on the project, goModule and the embedded templates, and keys are
+// Files returns the generated files for a project, sorted by path. Only a Go
+// module gets the Go-only files, the golangci-lint config and the ruleguard
+// ruleset. Only a Node project gets the pnpm settings. The output depends only
+// on the project, its languages and the embedded templates, and keys are
 // sorted, so comparing it with the files on disk detects drift.
-func Files(p *config.Project, goModule bool) ([]File, error) {
+func Files(p *config.Project, langs Langs) ([]File, error) {
+	goModule := langs.Go
 	files := make([]File, 0, len(toolConfigs)+1)
 	for _, tc := range toolConfigs {
-		if tc.goOnly && !goModule {
+		if tc.goOnly && !goModule || tc.nodeOnly && !langs.Node {
 			continue
 		}
 		if _, ok := p.Tools[tc.tool]; tc.overrideOnly && !ok {
