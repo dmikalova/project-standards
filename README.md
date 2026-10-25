@@ -20,7 +20,8 @@ and the vocabulary in [`CONTEXT.md`](CONTEXT.md).
 - **One CI/CD workflow:** [`cicd.yaml`](.github/workflows/cicd.yaml) checks,
   releases and deploys every project, chosen by its languages and `kind`.
 - **Hooks:** the base [`lefthook.jsonc`](lefthook.jsonc) runs the full check on
-  every commit and lints the commit message.
+  every commit and lints the commit message. The lint rejects agent
+  attribution, such as a `Co-authored-by` trailer for Claude or Copilot.
 - **Conformance:** a weekly workflow keeps the standard files current in every
   project with the `mklv-conform` topic.
 

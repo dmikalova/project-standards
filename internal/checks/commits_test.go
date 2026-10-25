@@ -143,7 +143,7 @@ func TestCommits(t *testing.T) {
 	})
 	var err error
 	out := captureStdout(t, func() { err = testChecks.Commits() })
-	wantErr(t, err, "commit messages failed commitlint: "+bad)
+	wantErr(t, err, "commit messages failed the commit lint: "+bad)
 	if !strings.Contains(out, bad+" bad message\ntype is missing\n") ||
 		!strings.Contains(out, "test commits: linted 2 commit(s)") {
 		t.Errorf("output = %q", out)
@@ -223,10 +223,45 @@ func TestCommitMessage(t *testing.T) {
 	}
 	var err error
 	out := captureStdout(t, func() { err = testChecks.CommitMessage("bad") })
-	wantErr(t, err, "the commit message failed commitlint")
+	wantErr(t, err, "the commit message failed the commit lint")
 	if !strings.HasPrefix(out, "type is missing\n") {
 		t.Errorf("output = %q, want commitlint's", out)
 	}
 	wantErr(t, testChecks.CommitMessage("comment"), "the commit message is empty")
 	wantErr(t, testChecks.CommitMessage("missing"), "reading the commit message")
+}
+
+func TestAgentAttribution(t *testing.T) {
+	tests := map[string][]string{
+		"feat: x\n\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>": {
+			"Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>",
+		},
+		"fix: y\n\nco-authored-by: Claude <noreply@anthropic.com>": {
+			"co-authored-by: Claude <noreply@anthropic.com>",
+		},
+		"fix: y\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)": {
+			"🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+		},
+		"feat: z\n\nCo-authored-by: Jane Doe <jane@example.com>":  nil,
+		"docs: explain how Copilot adds a co-authored-by trailer": nil,
+	}
+	for msg, want := range tests {
+		if got := agentAttribution(msg); !reflect.DeepEqual(got, want) {
+			t.Errorf("agentAttribution(%q) = %q, want %q", msg, got, want)
+		}
+	}
+}
+
+func TestCommitMessageAgentAttribution(t *testing.T) {
+	newRepo(t)
+	passGo(t)
+	writeFiles(t, map[string]string{
+		"msg": "feat: good\n\nCo-authored-by: Claude <noreply@anthropic.com>\n",
+	})
+	var err error
+	out := captureStdout(t, func() { err = testChecks.CommitMessage("msg") })
+	wantErr(t, err, "the commit message failed the commit lint")
+	if !strings.Contains(out, "agent attribution is not allowed: Co-authored-by: Claude") {
+		t.Errorf("output = %q, want the attribution line", out)
+	}
 }

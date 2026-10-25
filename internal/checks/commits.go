@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -56,7 +57,7 @@ func (c *Checks) Commits() error {
 	}
 	fmt.Printf("%s: linted %d commit(s) in %s\n", c.label("commits"), linted, revRange)
 	if len(failed) > 0 {
-		return fmt.Errorf("commit messages failed commitlint: %s", strings.Join(failed, ", "))
+		return fmt.Errorf("commit messages failed the commit lint: %s", strings.Join(failed, ", "))
 	}
 	return nil
 }
@@ -76,7 +77,7 @@ func (c *Checks) CommitMessage(path string) error {
 	}
 	if out, err := c.lintMessage(msg); err != nil {
 		fmt.Print(out)
-		return errors.New("the commit message failed commitlint")
+		return errors.New("the commit message failed the commit lint")
 	}
 	return nil
 }
@@ -101,7 +102,8 @@ func cleanMessage(s string) string {
 }
 
 // lintMessage runs commitlint on one message, with the generated config when
-// the project has one, and returns commitlint's output.
+// the project has one, and then checks it for agent attribution. It returns
+// the output of both.
 func (c *Checks) lintMessage(msg string) (string, error) {
 	args := []string{c.Tools.Commitlint, "lint"}
 	if _, err := os.Stat(commitlintConfig); err == nil {
@@ -109,7 +111,31 @@ func (c *Checks) lintMessage(msg string) (string, error) {
 	}
 	var out bytes.Buffer
 	_, err := goRun(strings.NewReader(msg+"\n"), &out, &out, args...)
+	if lines := agentAttribution(msg); len(lines) > 0 {
+		for _, line := range lines {
+			fmt.Fprintf(&out, "agent attribution is not allowed: %s\n", line)
+		}
+		err = errors.Join(err, errors.New("agent attribution"))
+	}
 	return out.String(), err
+}
+
+// agentPattern matches a line that credits a coding agent: a Co-authored-by
+// trailer for an agent, or the "Generated with Claude Code" footer. The
+// owner is the author of every commit; agents do not sign their work.
+var agentPattern = regexp.MustCompile(
+	`(?i)^\s*co-authored-by:.*\b(claude|copilot|anthropic|openai|codex|gemini|cursor)\b` +
+		`|(?i)generated with \[?claude code`)
+
+// agentAttribution returns the lines of msg that agentPattern matches.
+func agentAttribution(msg string) []string {
+	var found []string
+	for line := range strings.SplitSeq(msg, "\n") {
+		if agentPattern.MatchString(line) {
+			found = append(found, strings.TrimSpace(line))
+		}
+	}
+	return found
 }
 
 // commitlintConfig is the generated config commitlint lints with.
