@@ -44,7 +44,7 @@ func TestNonGoProject(t *testing.T) {
 	r := mustConform(t, dir, f)
 	want := []string{
 		".commitlint.yaml", ".dockerignore", ".github/workflows/cicd.yaml", ".gitignore",
-		".gitleaks.toml", ".markdownlint-cli2.yaml", "LICENSE", "lefthook.jsonc",
+		".gitleaks.toml", ".markdownlint-cli2.yaml", "LICENSE", "lefthook.jsonc", "paseo.json",
 	}
 	if !reflect.DeepEqual(r.Changed, want) {
 		t.Errorf("changed %v, want %v", r.Changed, want)
@@ -57,6 +57,7 @@ func TestNonGoProject(t *testing.T) {
 	}
 	for path, content := range map[string][]byte{
 		"lefthook.jsonc":              templates.Lefthook,
+		"paseo.json":                  templates.Paseo,
 		".github/workflows/cicd.yaml": templates.CICD,
 		".gitignore":                  templates.Gitignore,
 		".dockerignore":               templates.Dockerignore,
@@ -115,6 +116,7 @@ func TestGoProject(t *testing.T) {
 		".commitlint.yaml", ".dockerignore", ".github/workflows/cicd.yaml", ".gitignore",
 		".gitleaks.toml", ".golangci.yaml", ".markdownlint-cli2.yaml", ".ruleguard.go",
 		"LICENSE", "go.mod", "go.sum", "lefthook.jsonc", "magefiles/magefile.go",
+		"paseo.json",
 	}
 	if !reflect.DeepEqual(r.Changed, want) {
 		t.Errorf("changed %v, want %v", r.Changed, want)

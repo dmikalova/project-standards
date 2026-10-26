@@ -79,6 +79,9 @@ Validate locally with `project-standards fix && project-standards check`.
 
   Run `lefthook install` after cloning.
 
+- `paseo.json` sets the [Paseo](https://paseo.sh) worktree setup. Each new
+  worktree is trusted for Claude Code (`paseo-trust`, in the den Paseo image)
+  and gets the lefthook hooks. A step is skipped if its tool is not installed.
 - `.github/workflows/cicd.yaml` calls
   `dmikalova/project-standards/.github/workflows/cicd.yaml@main`.
 - `mklv.config.json` is optional. It declares the `kind` (cli, cloudrun, image,

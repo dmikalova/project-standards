@@ -34,6 +34,14 @@ var (
 	//go:embed conform/lefthook.jsonc
 	Lefthook []byte
 
+	// Paseo is the paseo.json every project uses. Its worktree setup trusts
+	// each new Paseo worktree for Claude Code and installs the lefthook hooks.
+	// Each step is skipped where its tool is missing, such as outside the
+	// den Paseo image.
+	//
+	//go:embed conform/paseo.json
+	Paseo []byte
+
 	// CICD is the .github/workflows/cicd.yaml caller of the one reusable
 	// workflow (ADR 0006).
 	//

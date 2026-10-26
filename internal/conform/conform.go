@@ -35,6 +35,7 @@ const standardsModule = "github.com/dmikalova/project-standards"
 const (
 	licensePath      = "LICENSE"
 	lefthookPath     = "lefthook.jsonc"
+	paseoPath        = "paseo.json"
 	cicdPath         = ".github/workflows/cicd.yaml"
 	magefileStubPath = "magefiles/magefile.go"
 	gitignorePath    = ".gitignore"
@@ -157,6 +158,7 @@ func (c *conformer) standardFiles(goModule bool) ([]generate.File, error) {
 	files := []generate.File{
 		license,
 		{Path: lefthookPath, Content: templates.Lefthook},
+		{Path: paseoPath, Content: templates.Paseo},
 		{Path: cicdPath, Content: templates.CICD},
 	}
 	if goModule && c.needsMagefile() {
