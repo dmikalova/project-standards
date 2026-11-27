@@ -11,13 +11,13 @@ Several projects serve HTTP endpoints that other programs call:
 
 | Project | Endpoints for programs |
 | --- | --- |
-| keyforge-card-search | `GET /api/cards` (JSON export), `GET /icons/...` |
+| gallery.keyforge.cards | `GET /api/cards` (JSON export), `GET /icons/...` |
 | keyfordle | `GET /api/decks/public/...`, `POST /api/decks/public/record_keyfordle_completion/` |
 | keyforge.cards | `GET /health` |
 | keyforge-data (planned, keyforge-data ADR 0006) | cards, datasets, problems, later decks |
 
 No project has an OpenAPI file, a docs page, or an MCP server. Each project
-chooses its own error shape. For example, keyforge-card-search sends
+chooses its own error shape. For example, gallery.keyforge.cards sends
 `{"error": "..."}`. The only documentation is in the code and in the
 `AGENTS.md` files.
 
@@ -28,7 +28,7 @@ most TypeScript projects to Go.
 All apps run on Cloud Run with a minimum of zero instances. The standard
 must not add a separate service.
 
-A Cloud Run front end returns its own 404 for `/healthz`. search.keyforge.cards
+A Cloud Run front end returns its own 404 for `/healthz`. gallery.keyforge.cards
 returns 404 for `/healthz` and 200 for `/health`.
 
 ## Decision
@@ -162,7 +162,7 @@ each API handler back to `http.HandlerFunc`. Pages do not change.
 
 ## Consequences
 
-- keyforge-card-search changes its error shape from `{"error": "..."}` to
+- gallery.keyforge.cards changes its error shape from `{"error": "..."}` to
   problem details. Its JSON export is the first huma operation.
 - keyfordle moves its `/api/decks/public/...` endpoints to huma operations.
   It keeps the paths, because the paths copy the Master Vault paths that its
